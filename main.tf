@@ -148,7 +148,6 @@ resource "yandex_mdb_mysql_cluster" "mysql1" {
   network_id          = yandex_vpc_network.production.id
   version             = "8.0"
   security_group_ids  = [ yandex_vpc_security_group.default_sg.id ]
-  deletion_protection = true
 
   resources {
     resource_preset_id = "s2.micro"
