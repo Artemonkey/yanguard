@@ -52,7 +52,7 @@ resource "yandex_vpc_security_group_rule" "rule2" {
 
 resource "yandex_vpc_security_group_rule" "rule3" {
   security_group_binding = yandex_vpc_security_group.default_sg.id
-  v4_cidr_blocks    = [0.0.0.0/0]
+  v4_cidr_blocks    = ["0.0.0.0/0"]
   direction         = "ingress"
   description       = "vpn"
   from_port         = 0
@@ -62,7 +62,7 @@ resource "yandex_vpc_security_group_rule" "rule3" {
 
 resource "yandex_vpc_security_group_rule" "rule4" {
   security_group_binding = yandex_vpc_security_group.default_sg.id
-  v4_cidr_blocks    = [0.0.0.0/0]
+  v4_cidr_blocks    = ["0.0.0.0/0"]
   direction         = "egress"
   description       = "vpn"
   from_port         = 0
@@ -82,7 +82,7 @@ resource "yandex_compute_instance" "vpn-server" {
 
   boot_disk {
     initialize_params {
-      image_id = "fd8el1u5kajtnnfmo7vs"
+      image_id = local.image_vpn_server
     }
   }
 
@@ -119,7 +119,7 @@ resource "yandex_compute_instance" "host-vm" {
 
   boot_disk {
     initialize_params {
-      image_id = "fd83c4hba7mocdjp147o"
+      image_id = local.image_host_vm
     }
   }
 
@@ -178,7 +178,7 @@ resource "yandex_mdb_mysql_user" "mysql_user" {
   name       = "user1"
   password   = local.password
   permission {
-    database_name = "crmbase"
+    database_name = yandex_mdb_mysql_database.mysql_database.name
     roles         = ["ALL"]
   }
 }
