@@ -14,22 +14,17 @@ provider "yandex" {
   zone      = local.zone_subnet
 }
 
-resource "yandex_vpc_network" "production" {
-  name        = local.network_name
-  description = "inf-system-net"
-}
-
 resource "yandex_vpc_subnet" "lab-subnet-a" {
   name           = local.subnet_name
   v4_cidr_blocks = [local.ipv4]
   zone           = local.zone_subnet
-  network_id     = yandex_vpc_network.production.id
+  network_id     = local.id_net
 }
 
 resource "yandex_vpc_security_group" "default_sg" {
   name        = "default_sg"
   description = "Default security group"
-  network_id  = yandex_vpc_network.production.id
+  network_id  = local.id_net
 }
 
 resource "yandex_vpc_security_group_rule" "rule1" {
@@ -145,7 +140,7 @@ resource "yandex_compute_instance" "host-vm" {
 resource "yandex_mdb_mysql_cluster" "mysql1" {
   name                = "mysql1"
   environment         = "PRODUCTION"
-  network_id          = yandex_vpc_network.production.id
+  network_id          = local.id_net
   version             = "8.0"
   security_group_ids  = [ yandex_vpc_security_group.default_sg.id ]
 
@@ -205,4 +200,38 @@ resource "yandex_datatransfer_transfer" "transfer-to-new-database" {
   source_id   = "dtee0686sa2j6dj5l00m"
   target_id   = yandex_datatransfer_endpoint.new-cluster.id
   type        = "SNAPSHOT_AND_INCREMENT"
+}
+
+resource "yandex_function" "function" {
+  name               = "check-site-availability"
+  user_hash          = "function"
+  runtime            = "python312"
+  entrypoint         = "index.entry"
+  memory             = "512"
+  execution_timeout  = "10"
+  service_account_id = local.sa_id
+  environment = {
+    DB_USER = "user1"
+    VERBOSE_LOG = "False"
+    DB_NAME = "crmbase"
+    CRM_SERVER_URL = "http://${yandex_compute_instance.host-vm.network_interface[0].ip_address}/index.php"
+    DB_HOST = yandex_mdb_mysql_cluster.mysql1.host[0].fqdn
+    DB_PASSWORD = local.password
+  }
+  package {
+    bucket_name = "crmbase-storage"
+    object_name = "check-crm-availability.zip"
+    sha_256 = null
+  }
+  connectivity {
+    network_id = local.id_net
+  }
+}
+
+resource "yandex_function_iam_binding" "function-iam" {
+  function_id = yandex_function.function.id
+  role        = "serverless.functions.invoker"
+  members = [
+    "system:allUsers",
+  ]
 }
