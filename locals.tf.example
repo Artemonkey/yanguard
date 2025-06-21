@@ -1,0 +1,24 @@
+# Example set of local variables for main.tf 
+# More information about Terraform's local values – https://developer.hashicorp.com/terraform/language/values/locals
+/* Abbreviations:   YC – Yandex Cloud,
+                    sa – service account,
+                    vm – virtual machine. */
+locals {
+  token                = "<your_YC_service_account_token>"
+  cloud_id             = "<your_YC_identifier>"
+  folder_id            = "<your_YC_cloud_identifier>"
+  zone                 = "ru-central1"
+  zone_subnet          = "ru-central1-a"
+  username             = "<your_YC_service_account_username>" # service account for virtual machine creation
+  ssh_key_path         = "<absolute_path_in_file_system_to_the_public_ssh_key_file>" # selected file will be copied on virtual machines for secure connection after their deployment
+  sa_name              = "<your_service_account>" # optional variable. For better readability in config
+  sa_id                = "<your_service_account_identifier>" # service account identifier for YC function creation
+  network_name         = "<your_yandex_virtual_network_name>" # optional variable. Name of main yandex virtual network where virtual machines, Managed service for MySQL, yandex function and object storage will be deployed. For better readability in config
+  network_id           = "<your_yandex_virtual_network_identifier>"
+  subnet_name          = "<your_yandex_virtual_subnetwork_name>"
+  CIDR_ipv4            = "192.168.0.0/24" # example CIDR
+  mysql_password       = "<your_password_for_MySQL_user>"
+  static_ip_vpn_server = "<static_ip_address_for_vpn_server>" # ip address need to be acquired in YC console before setting here
+  image_vpn_server_id  = "<your_vpn_disk_image_identifier>" # need to be prepared in YC console before setting here
+  image_host_vm_id     = "<your_webserver_disk_image_identifier>" # need to be prepared in YC console before setting here
+}

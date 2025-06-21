@@ -16,15 +16,15 @@ provider "yandex" {
 
 resource "yandex_vpc_subnet" "lab-subnet-a" {
   name           = local.subnet_name
-  v4_cidr_blocks = [local.ipv4]
+  v4_cidr_blocks = [local.CIDR_ipv4]
   zone           = local.zone_subnet
-  network_id     = local.id_net
+  network_id     = local.network_id
 }
 
 resource "yandex_vpc_security_group" "default_sg" {
   name        = "default_sg"
   description = "Default security group"
-  network_id  = local.id_net
+  network_id  = local.network_id
 }
 
 resource "yandex_vpc_security_group_rule" "rule1" {
@@ -77,7 +77,7 @@ resource "yandex_compute_instance" "vpn-server" {
 
   boot_disk {
     initialize_params {
-      image_id = local.image_vpn_server
+      image_id = local.image_vpn_server_id
     }
   }
 
@@ -114,7 +114,7 @@ resource "yandex_compute_instance" "host-vm" {
 
   boot_disk {
     initialize_params {
-      image_id = local.image_host_vm
+      image_id = local.image_host_vm_id
     }
   }
 
@@ -140,7 +140,7 @@ resource "yandex_compute_instance" "host-vm" {
 resource "yandex_mdb_mysql_cluster" "mysql1" {
   name                = "mysql1"
   environment         = "PRODUCTION"
-  network_id          = local.id_net
+  network_id          = local.network_id
   version             = "8.0"
   security_group_ids  = [ yandex_vpc_security_group.default_sg.id ]
 
@@ -170,7 +170,7 @@ resource "yandex_mdb_mysql_database" "mysql_database" {
 resource "yandex_mdb_mysql_user" "mysql_user" {
   cluster_id = yandex_mdb_mysql_cluster.mysql1.id
   name       = "user1"
-  password   = local.password
+  password   = local.mysql_password
   permission {
     database_name = yandex_mdb_mysql_database.mysql_database.name
     roles         = ["ALL"]
@@ -187,7 +187,7 @@ resource "yandex_datatransfer_endpoint" "new-cluster" {
       database = "crmbase"
       user = "user1"
       password {
-        raw = local.password
+        raw = local.mysql_password
       }
     }
   }
@@ -216,7 +216,7 @@ resource "yandex_function" "function" {
     DB_NAME = "crmbase"
     CRM_SERVER_URL = "http://${yandex_compute_instance.host-vm.network_interface[0].ip_address}/index.php"
     DB_HOST = yandex_mdb_mysql_cluster.mysql1.host[0].fqdn
-    DB_PASSWORD = local.password
+    DB_PASSWORD = local.mysql_password
   }
   package {
     bucket_name = "crmbase-storage"
@@ -224,7 +224,7 @@ resource "yandex_function" "function" {
     sha_256 = null
   }
   connectivity {
-    network_id = local.id_net
+    network_id = local.network_id
   }
 }
 
